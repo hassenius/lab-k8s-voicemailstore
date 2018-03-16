@@ -47,18 +47,22 @@ def get_mailboxes():
     return jsonify({"mailboxes": mailboxes})
 
 
-@app.route('/api/v1/mailboxes/<mailbox>', methods=['GET'])
-def get_mailbox(mailbox):
-    """Get information on a specific mailbox."""
-    return jsonify(head_container(mailbox))
-
+@app.route('/api/v1/mailboxes/<mailbox>', methods=['GET', 'PUT'])
+def parse_mailbox(mailbox):
+    """Get information on a specific mailbox or create new."""
+    if request.method == 'GET':
+        return jsonify(head_container(mailbox))
+    elif request.method == 'PUT':
+        return jsonify({'status':put_container(mailbox)})
+    else:
+        # For sanity. Should never arrive here
+        return not_found()
 
 @app.route('/api/v1/mailboxes/<mailbox>/voicemails', methods=['GET', 'POST'])
 def parse_voicemails(mailbox):
     """GET/POST voicemails for a mailbox."""
-    headers, objects = get_container(mailbox)
-
     if request.method == 'GET':
+        headers, objects = get_container(mailbox)
         voicemails = []
         if headers['x-container-object-count'] > 0:
             for obj in objects:
@@ -72,8 +76,12 @@ def parse_voicemails(mailbox):
         headers=dict( ('X-Object-Meta-Calldata-%s' % k, calldata[k]) for k in calldata.keys() )
         audio = request.files['file']
         voicemail = 'voicemail-' + calldata['messageid']
+
+        # Ensure the container exists before attempting to put an object in it
+        put_container(mailbox)
         etag = put_object(mailbox, voicemail, audio, headers)
-        return jsonify({'etag': etag, 'input': calldata})
+
+        return jsonify({'etag': etag, 'voicemail': voicemail, 'input': calldata})
 
 
 @app.route('/api/v1/mailboxes/<mailbox>/voicemails/<voicemail>', methods=['GET'])
