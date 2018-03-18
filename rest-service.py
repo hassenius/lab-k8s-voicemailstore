@@ -35,6 +35,21 @@ def help():
     return jsonify(func_list)
 
 
+@app.route('/api/v1/allvoicemails', methods=['GET'])
+def get_allvoicemails():
+    """List all available voicemails."""
+    voicemails = []
+    headers, containers = get_account()
+    if headers['x-account-container-count'] > 0:
+      for c in containers:
+        headers, objects = get_container(c['name'])
+        if headers['x-container-object-count'] > 0:
+            for obj in objects:
+                voicemails.append({'mailbox': c['name'], 'name': obj['name']})
+
+    return jsonify(voicemails)
+
+
 @app.route('/api/v1/mailboxes', methods=['GET'])
 def get_mailboxes():
     """List available mailboxes."""
