@@ -133,13 +133,14 @@ def parse_transcript(mailbox, voicemail):
         return jsonify({"transcript": transcript})
 
     elif request.method == 'POST':
-        data = json.loads(request.data)
+        data = request.get_json()
+        print data
         text = data['transcript']
         add_object_metadata(mailbox, voicemail, obj_meta, 'calldata-transcript', text)
         return jsonify({"transcript": text})
 
     else:
-        # We should never arrive here, but for the sake of sanity
+        # We should never arrive here, but for the sake of sanity.
         return not_found()
 
 @app.route('/api/v1/mailboxes/<mailbox>/voicemails/<voicemail>/calldata', methods=['GET'])
@@ -155,4 +156,4 @@ def get_calldata(mailbox, voicemail):
     return jsonify({"calldata": calldata})
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=80, debug=True)
